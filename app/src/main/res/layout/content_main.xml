@@ -14,18 +14,12 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:id="@+id/linearLayout">
-        <TextView
-            android:text="Hello World!"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
 
         <!-- Set OnClickListener to trigger results when pressed -->
         <Button
             android:id="@+id/topics_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:layout_marginLeft="20dp"
             android:text="@string/button" />
         <!-- Closing tag for the horizontal nested layout -->
     </LinearLayout>
