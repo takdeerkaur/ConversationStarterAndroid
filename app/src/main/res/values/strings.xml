@@ -2,4 +2,5 @@
     <string name="app_name">Conversation Starter</string>
     <string name="action_settings">Settings</string>
     <string name="button">All Topics</string>
+    <string name="post_button">Add Category</string>
 </resources>

@@ -1,5 +1,7 @@
 package com.takdeer.conversationstarter;
 
+import android.content.Context;
+import android.content.Entity;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -11,12 +13,15 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.JsonHttpResponseHandler;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.entity.StringEntity;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -29,10 +34,14 @@ import java.util.Iterator;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     Button topicsButton;
+    Button postCategoryButton;
+    EditText categoryNameInput;
     ListView mainListView;
     JSONAdapter mJSONAdapter;
+    String categoryName;
 
     private static final String QUERY_URL = "http://conversationstarter.elasticbeanstalk.com/topics/?format=json";
+    private static final String CATEGORY_POST_URL = "http://conversationstarter.elasticbeanstalk.com/categories/";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,6 +64,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         topicsButton = (Button) findViewById(R.id.topics_button);
         topicsButton.setOnClickListener(this);
 
+        postCategoryButton = (Button) findViewById(R.id.post_category_button);
+        postCategoryButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                categoryNameInput = (EditText) findViewById(R.id.category_name_input);
+                categoryName = categoryNameInput.getText().toString();
+                postCategory(categoryName);
+            }
+        });
+
         // Create a JSONAdapter for the ListView
         mJSONAdapter = new JSONAdapter(this, getLayoutInflater());
 
@@ -63,6 +82,49 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         // Set the ListView to use the ArrayAdapter
         mainListView.setAdapter(mJSONAdapter);
+    }
+
+    private void postCategory(String categoryName) {
+        // Create a client to perform networking
+        AsyncHttpClient client = new AsyncHttpClient();
+        Context context = this.getApplicationContext();
+
+        // Have the client get a JSONArray of data
+        // and define how to respond
+        JSONObject jsonParams = new JSONObject();
+        try {
+            jsonParams.put("category_name", categoryName);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        StringEntity entity = null;
+        try {
+            entity = new StringEntity(jsonParams.toString());
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        client.post(context, CATEGORY_POST_URL, entity, "application/json",
+                new JsonHttpResponseHandler() {
+
+                    @Override
+                    public void onSuccess(JSONArray jsonArray) {
+                        Log.e("yooo", CATEGORY_POST_URL);
+                        // Display a "Toast" message
+                        // to announce your success
+                        Toast.makeText(getApplicationContext(), "Success!", Toast.LENGTH_LONG).show();
+                    }
+
+                    @Override
+                    public void onFailure(int statusCode, Throwable throwable, JSONObject error) {
+                        // Display a "Toast" message
+                        // to announce the failure
+                        Toast.makeText(getApplicationContext(), "Error: " + statusCode + " " + throwable.getMessage(), Toast.LENGTH_LONG).show();
+
+                        // Log error message
+                        // to help solve any problems
+                        Log.e("Uhoh, it not work", statusCode + " " + throwable.getMessage());
+                    }
+                });
     }
 
     @Override
