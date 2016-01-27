@@ -11,10 +11,12 @@ import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import com.loopj.android.http.AsyncHttpClient;
@@ -39,9 +41,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     ListView mainListView;
     JSONAdapter mJSONAdapter;
     String categoryName;
+    Spinner spinner;
+    ArrayList<String> categoryArray = new ArrayList<String>();
+    ArrayAdapter adapter;
 
     private static final String QUERY_URL = "http://conversationstarter.elasticbeanstalk.com/topics/?format=json";
     private static final String CATEGORY_POST_URL = "http://conversationstarter.elasticbeanstalk.com/categories/";
+    private static final String CATEGORIES_URL = "http://conversationstarter.elasticbeanstalk.com/categories/?format=json";
+    private static final String QUERY_BY_CATEGORY_URL = "http://conversationstarter.elasticbeanstalk.com/topics/category/";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,15 +72,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         topicsButton = (Button) findViewById(R.id.topics_button);
         topicsButton.setOnClickListener(this);
 
-        postCategoryButton = (Button) findViewById(R.id.post_category_button);
-        postCategoryButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                categoryNameInput = (EditText) findViewById(R.id.category_name_input);
-                categoryName = categoryNameInput.getText().toString();
-                postCategory(categoryName);
-            }
-        });
+//        postCategoryButton = (Button) findViewById(R.id.post_category_button);
+//        postCategoryButton.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                categoryNameInput = (EditText) findViewById(R.id.category_name_input);
+//                categoryName = categoryNameInput.getText().toString();
+//                postCategory(categoryName);
+//            }
+//        });
 
         // Create a JSONAdapter for the ListView
         mJSONAdapter = new JSONAdapter(this, getLayoutInflater());
@@ -82,6 +90,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         // Set the ListView to use the ArrayAdapter
         mainListView.setAdapter(mJSONAdapter);
+
+        populateCategories();
+        spinner = (Spinner) findViewById(R.id.categories_spinner);
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                String category = parent.getItemAtPosition(position).toString();
+                queryTopics(category);
+            }
+            public void onNothingSelected(AdapterView<?> parent) {
+                Log.d("hello", "hello");
+            }
+        });
+        // Apply the adapter to the spinner
+        adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, categoryArray);
+        spinner.setAdapter(adapter);
     }
 
     private void postCategory(String categoryName) {
@@ -188,6 +211,82 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         Log.e("Uhoh, it not work", statusCode + " " + throwable.getMessage());
                     }
                 });
+    }
+
+    private void queryTopics(String category) {
+        // Create a client to perform networking
+        AsyncHttpClient client = new AsyncHttpClient();
+
+        // Have the client get a JSONArray of data
+        // and define how to respond
+        client.get(QUERY_BY_CATEGORY_URL + category + "/?format=json" ,
+                new JsonHttpResponseHandler() {
+
+                    @Override
+                    public void onSuccess(JSONArray jsonArray) {
+                        // Display a "Toast" message
+                        // to announce your success
+                        Toast.makeText(getApplicationContext(), "Success!", Toast.LENGTH_LONG).show();
+
+                        // update the data in your custom method.
+                        mJSONAdapter.updateData(jsonArray);
+                    }
+
+                    @Override
+                    public void onFailure(int statusCode, Throwable throwable, JSONObject error) {
+                        // Display a "Toast" message
+                        // to announce the failure
+                        Toast.makeText(getApplicationContext(), "Error: " + statusCode + " " + throwable.getMessage(), Toast.LENGTH_LONG).show();
+
+                        // Log error message
+                        // to help solve any problems
+                        Log.e("Uhoh, it not work", statusCode + " " + throwable.getMessage());
+                    }
+                });
+    }
+
+    private void populateCategories() {
+        // Create a client to perform networking
+        AsyncHttpClient client = new AsyncHttpClient();
+
+        // Have the client get a JSONArray of data
+        // and define how to respond
+        client.get(CATEGORIES_URL,
+                new JsonHttpResponseHandler() {
+
+                    @Override
+                    public void onSuccess(JSONArray jsonArray) {
+                        // Display a "Toast" message
+                        // to announce your success
+                        Toast.makeText(getApplicationContext(), "Success!", Toast.LENGTH_LONG).show();
+
+                        // update the data in your custom method.
+//                        categoryAdapter.updateData(jsonArray);
+                        // add categories to an array list for Spinner
+                        if (jsonArray != null) {
+                            for (int i=0;i<jsonArray.length();i++){
+                                try {
+                                    categoryArray.add(jsonArray.getJSONObject(i).getString("category_name"));
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+                        adapter.notifyDataSetChanged();
+                    }
+
+                    @Override
+                    public void onFailure(int statusCode, Throwable throwable, JSONObject error) {
+                        // Display a "Toast" message
+                        // to announce the failure
+                        Toast.makeText(getApplicationContext(), "Error: " + statusCode + " " + throwable.getMessage(), Toast.LENGTH_LONG).show();
+
+                        // Log error message
+                        // to help solve any problems
+                        Log.e("Uhoh, it not work", statusCode + " " + throwable.getMessage());
+                    }
+                });
+
     }
 
     @Override
