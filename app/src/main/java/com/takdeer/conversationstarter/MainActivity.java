@@ -41,9 +41,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     Button topicsButton;
     Button postCategoryButton;
     EditText categoryNameInput;
-    EditText topicNameInput;
     ListView mainListView;
-    JSONAdapter mJSONAdapter;
+    JSONAdapter topicJSONAdapter;
     String categoryName;
     Spinner spinner;
     Spinner categoriesSpinnerInput;
@@ -54,11 +53,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     String categoryInput;
     EditText topicInput;
 
-    private static final String QUERY_URL = "http://conversationstarter.elasticbeanstalk.com/topics/?format=json";
-    private static final String TOPIC_POST_URL = "http://conversationstarter.elasticbeanstalk.com/topics/";
+    Topic topic = new Topic();
+
     private static final String CATEGORY_URL = "http://conversationstarter.elasticbeanstalk.com/categories/";
     private static final String CATEGORIES_URL = "http://conversationstarter.elasticbeanstalk.com/categories/?format=json";
-    private static final String QUERY_BY_CATEGORY_URL = "http://conversationstarter.elasticbeanstalk.com/topics/category/";
 
 
     @Override
@@ -107,7 +105,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                     public void onClick(DialogInterface dialog,int id) {
                                         // get user input and set it to result
                                         // edit text
-                                        postTopic(topicInput.getText().toString(), categoryId);
+                                        topic.postTopic(context, topicInput.getText().toString(), categoryId);
                                     }
                                 })
                         .setNegativeButton("Cancel",
@@ -141,31 +139,29 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //        });
 
         // Create a JSONAdapter for the ListView
-        mJSONAdapter = new JSONAdapter(this, getLayoutInflater());
+        topicJSONAdapter = new JSONAdapter(this, getLayoutInflater());
 
         // Access the ListView
         mainListView = (ListView) findViewById(R.id.main_listview);
 
         // Set the ListView to use the ArrayAdapter
-        mainListView.setAdapter(mJSONAdapter);
+        mainListView.setAdapter(topicJSONAdapter);
 
         populateCategories();
         spinner = (Spinner) findViewById(R.id.categories_spinner);
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 String category = parent.getItemAtPosition(position).toString();
-                queryTopics(category);
+                topicJSONAdapter.updateData(topic.getTopics(category));
             }
             public void onNothingSelected(AdapterView<?> parent) {
                 Log.d("hello", "hello");
             }
         });
         // Apply the adapter to the spinner
-        adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, categoryArray);
+        adapter = new ArrayAdapter<String>(this, R.layout.spinner_item, categoryArray);
         spinner.setAdapter(adapter);
     }
-
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -187,79 +183,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
         return super.onOptionsItemSelected(item);
-    }
-
-    private void queryTopics() {
-        // Create a client to perform networking
-        AsyncHttpClient client = new AsyncHttpClient();
-
-        // Have the client get a JSONArray of data
-        // and define how to respond
-        client.get(QUERY_URL,
-                new JsonHttpResponseHandler() {
-
-                    @Override
-                    public void onSuccess(JSONArray jsonArray) {
-                        // Display a "Toast" message
-                        // to announce your success
-                        Toast.makeText(getApplicationContext(), "Success!", Toast.LENGTH_LONG).show();
-//                        Log.d("yaaay, worked", jsonObject.toString());
-//
-//                        Iterator x = jsonObject.keys();
-//                        JSONArray jsonArray = new JSONArray();
-//
-//                        while (x.hasNext()){
-//                            String key = (String) x.next();
-//                            jsonArray.put(jsonObject);
-//                        }
-
-                        // update the data in your custom method.
-                        mJSONAdapter.updateData(jsonArray);
-                    }
-
-                    @Override
-                    public void onFailure(int statusCode, Throwable throwable, JSONObject error) {
-                        // Display a "Toast" message
-                        // to announce the failure
-                        Toast.makeText(getApplicationContext(), "Error: " + statusCode + " " + throwable.getMessage(), Toast.LENGTH_LONG).show();
-
-                        // Log error message
-                        // to help solve any problems
-                        Log.e("query topics not work", statusCode + " " + throwable.getMessage());
-                    }
-                });
-    }
-
-    private void queryTopics(String category) {
-        // Create a client to perform networking
-        AsyncHttpClient client = new AsyncHttpClient();
-
-        // Have the client get a JSONArray of data
-        // and define how to respond
-        client.get(QUERY_BY_CATEGORY_URL + category + "/?format=json" ,
-                new JsonHttpResponseHandler() {
-
-                    @Override
-                    public void onSuccess(JSONArray jsonArray) {
-                        // Display a "Toast" message
-                        // to announce your success
-                        Toast.makeText(getApplicationContext(), "Success!", Toast.LENGTH_LONG).show();
-
-                        // update the data in your custom method.
-                        mJSONAdapter.updateData(jsonArray);
-                    }
-
-                    @Override
-                    public void onFailure(int statusCode, Throwable throwable, JSONObject error) {
-                        // Display a "Toast" message
-                        // to announce the failure
-                        Toast.makeText(getApplicationContext(), "Error: " + statusCode + " " + throwable.getMessage(), Toast.LENGTH_LONG).show();
-
-                        // Log error message
-                        // to help solve any problems
-                        Log.e("query topic not work", statusCode + " " + throwable.getMessage());
-                    }
-                });
     }
 
     private void postCategory(String categoryName) {
@@ -301,54 +224,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         // Log error message
                         // to help solve any problems
                         Log.e("post category not work", statusCode + " " + throwable.getMessage());
-                    }
-                });
-    }
-
-    private void postTopic(String topicName, int categoryID) {
-        // Create a client to perform networking
-        AsyncHttpClient client = new AsyncHttpClient();
-        Context context = this.getApplicationContext();
-
-        // Have the client get a JSONArray of data
-        // and define how to respond
-        JSONObject jsonParams = new JSONObject();
-        try {
-            jsonParams.put("topic_name", topicName);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        try {
-            jsonParams.put("category_id", categoryID);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        StringEntity entity = null;
-        try {
-            entity = new StringEntity(jsonParams.toString());
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-        client.post(context, TOPIC_POST_URL, entity, "application/json",
-                new JsonHttpResponseHandler() {
-
-                    @Override
-                    public void onSuccess(JSONArray jsonArray) {
-                        Log.e("yooo", TOPIC_POST_URL);
-                        // Display a "Toast" message
-                        // to announce your success
-                        Toast.makeText(getApplicationContext(), "Success!", Toast.LENGTH_LONG).show();
-                    }
-
-                    @Override
-                    public void onFailure(int statusCode, Throwable throwable, JSONObject error) {
-                        // Display a "Toast" message
-                        // to announce the failure
-                        Toast.makeText(getApplicationContext(), "Error: " + statusCode + " " + throwable.getMessage(), Toast.LENGTH_LONG).show();
-
-                        // Log error message
-                        // to help solve any problems
-                        Log.e("post topic not work", statusCode + " " + throwable.getMessage());
                     }
                 });
     }
@@ -443,6 +318,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onClick(View v) {
         // On Get Topics button click, show results
-        queryTopics();
+        topicJSONAdapter.updateData(topic.getTopics());
     }
 }
