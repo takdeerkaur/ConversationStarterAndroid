@@ -20,9 +20,9 @@ import java.io.UnsupportedEncodingException;
 public class Topic {
     JSONArray topicJSONArray = new JSONArray();
 
-    private static final String TOPIC_URL_JSON = "http://conversationstarter.elasticbeanstalk.com/topics/?format=json";
-    private static final String TOPIC_URL = "http://conversationstarter.elasticbeanstalk.com/topics/";
-    private static final String TOPIC_BY_CATEGORY_URL = "http://conversationstarter.elasticbeanstalk.com/topics/category/";
+    private static final String TOPIC_URL_JSON = "https://conversation-starter.herokuapp.com/topics/?format=json";
+    private static final String TOPIC_URL = "https://conversation-starter.herokuapp.com/topics/";
+    private static final String TOPIC_BY_CATEGORY_URL = "https://conversation-starter.herokuapp.com/topics/category/";
 
     public JSONArray getTopics() {
         AsyncHttpClient client = new AsyncHttpClient();

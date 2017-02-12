@@ -55,8 +55,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     Topic topic = new Topic();
 
-    private static final String CATEGORY_URL = "http://conversationstarter.elasticbeanstalk.com/categories/";
-    private static final String CATEGORIES_URL = "http://conversationstarter.elasticbeanstalk.com/categories/?format=json";
+    private static final String CATEGORY_URL = "https://conversation-starter.herokuapp.com/categories/";
+    private static final String CATEGORIES_URL = "https://conversation-starter.herokuapp.com/categories/?format=json";
 
 
     @Override
